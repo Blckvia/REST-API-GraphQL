@@ -4,9 +4,10 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const multer = require('multer');
+const { graphqlHTTP } = require('express-graphql');
 
-const feedRoutes = require('./routes/feed');
-const authRoutes = require('./routes/auth');
+const graphqlSchema = require('./graphql/schema');
+const graphqlResolver = require('./graphql/resolvers');
 
 const app = express();
 
@@ -50,8 +51,23 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use('/feed', feedRoutes);
-app.use('/auth', authRoutes);
+app.use(
+    '/graphql',
+    graphqlHTTP({
+        schema: graphqlSchema,
+        rootValue: graphqlResolver,
+        graphiql: true,
+        customFormatErrorFn(err) {
+            if (!err.originalError) {
+                return err;
+            }
+            const data = err.originalError.data;
+            const message = err.message || 'An error occured';
+            const code = err.originalError.code || 500;
+            return { message: message, status: code, data: data };
+        },
+    })
+);
 
 app.use((error, req, res, next) => {
     console.log(error);
@@ -66,10 +82,6 @@ mongoose
         'mongodb+srv://blckvia:blckviaRock@cluster0.dhwfct2.mongodb.net/messages'
     )
     .then((result) => {
-        const server = app.listen(8080);
-        const io = require('./socket').init(server, {});
-        io.on('connection', (socket) => {
-            console.log('Client connected');
-        });
+        app.listen(8080);
     })
     .catch((err) => console.log(err));
