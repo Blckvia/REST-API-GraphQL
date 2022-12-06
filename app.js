@@ -101,7 +101,7 @@ app.use((error, req, res, next) => {
 
 mongoose
     .connect(
-        'mongodb+srv://blckvia:blckviaRock@cluster0.dhwfct2.mongodb.net/messages'
+        `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@cluster0.dhwfct2.mongodb.net/${process.env.MONGO_DEFAULT_DATABASE}`
     )
     .then((result) => {
         app.listen(8080);
